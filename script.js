@@ -3,7 +3,21 @@ const testArea = document.querySelector("#test-area");
 const originText = document.querySelector("#origin-text p").innerHTML;
 const resetButton = document.querySelector("#reset");
 const theTimer = document.querySelector(".timer");
+const submitButton = document.querySelector("#submit");
 
+
+//load scores from localstorage on page load
+window.onload = function() {
+    const storedScores = JSON.parse(localStorage.getItem("typingTestScores")) || [];
+    const scoresContainer = document.getElementById("scores");
+    
+    storedScores.forEach(score => {
+        const newScore = document.createElement("ul");
+        newScore.classList.add("scorelist");
+        newScore.innerHTML = `<li>Name: <span>${score.name}</span></li><li>Time: <span>${score.time}</span></li>`;
+        scoresContainer.appendChild(newScore);
+    });
+};
 
 // Run an optimized minute/second/hundredths timer:
 var timerCount = 0;
@@ -50,6 +64,8 @@ testArea.addEventListener("keyup", function() {
     if (enteredText === originText) {
         testWrapper.style.borderColor = "green";
         clearInterval(interval); // Stop the timer when the text matches
+        //show the submit score button
+        submitButton.style.visibility = "visible";
     } else if (originText.startsWith(enteredText)) {
         testWrapper.style.borderColor = "orange"; // Partial match
     } else {
@@ -70,4 +86,27 @@ resetButton.addEventListener("click", function() {
     testWrapper.style.borderColor = "grey"; // Reset border color
     //stop the timer
 
+});
+
+//once submit button is clicked, prompt for name, then add name and time to scoreboard
+submitButton.addEventListener("click", function() {
+    const playerName = prompt("Enter your name:");
+    const finalTime = theTimer.innerHTML;
+    
+    //append to the scoreboard
+    const scores = document.getElementById("scores");
+    const newScore = document.createElement("ul");
+    newScore.classList.add("scorelist");
+    newScore.innerHTML = `<li>Name: <span>${playerName}</span></li><li>Time: <span>${finalTime}</span></li>`;
+    scores.appendChild(newScore);
+
+    //save to localstorage
+    const scoreData = { name: playerName, time: finalTime };
+    let storedScores = JSON.parse(localStorage.getItem("typingTestScores")) || [];
+    storedScores.push(scoreData);
+    localStorage.setItem("typingTestScores", JSON.stringify(storedScores));
+
+    
+    // Hide the submit button after submission
+    submitButton.style.visibility = "hidden";
 });
