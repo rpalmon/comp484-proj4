@@ -6,23 +6,51 @@ const theTimer = document.querySelector(".timer");
 const submitButton = document.querySelector("#submit");
 
 
-//load scores from localstorage on page load
-window.onload = function() {
+const Paragraphs = [
+    "The quick brown fox jumps over the lazy dog.",
+    "Fast typing tests can help improve your speed and accuracy.",
+    "Practice makes perfect when it comes to typing.",
+    "Typing is an essential skill in the digital age.",
+    "Consistent practice can lead to significant improvements in typing speed."
+]
+
+// Function to display top 3 scores
+function displayTopScores() {
     const storedScores = JSON.parse(localStorage.getItem("typingTestScores")) || [];
     const scoresContainer = document.getElementById("scores");
     
-    storedScores.forEach(score => {
+    // Sort scores by WPM in descending order (highest first)
+    const sortedScores = storedScores.sort((a, b) => (b.wpm || 0) - (a.wpm || 0));
+    
+    // Clear existing scores
+    scoresContainer.innerHTML = "";
+    
+    // Display only top 3 scores
+    const topThree = sortedScores.slice(0, 3);
+    topThree.forEach(score => {
         const newScore = document.createElement("ul");
         newScore.classList.add("scorelist");
-        newScore.innerHTML = `<li>Name: <span>${score.name}</span></li><li>Time: <span>${score.time}</span></li>`;
+        const wpmDisplay = score.wpm ? `<li>WPM: <span>${score.wpm}</span></li>` : "";
+        newScore.innerHTML = `<li>Name: <span>${score.name}</span></li><li>Time: <span>${score.time}</span></li>${wpmDisplay}`;
         scoresContainer.appendChild(newScore);
     });
+}
+
+//load scores from localstorage on page load
+window.onload = function() {
+    displayTopScores();
+
+    // Set a random paragraph from the array as the origin text
+    const randomIndex = Math.floor(Math.random() * Paragraphs.length);
+    document.querySelector("#origin-text p").innerHTML = Paragraphs[randomIndex];
 };
 
 // Run an optimized minute/second/hundredths timer:
 var timerCount = 0;
 var interval;
 var timerRunning = false;
+
+
 
 
 function runTimer() {
@@ -58,9 +86,24 @@ function timerStart() {
 testArea.addEventListener("keypress", timerStart);
 //on keypress, in the test area, start the timer
 
+// Helper function to convert timer format (MM:SS:HH) to total seconds
+function timerToSeconds(timerString) {
+    const parts = timerString.split(':');
+    const minutes = parseInt(parts[0], 10);
+    const seconds = parseInt(parts[1], 10);
+    const hundredths = parseInt(parts[2], 10);
+    return minutes * 60 + seconds + hundredths / 100;
+}
+
+// Calculate WPM using the standard formula: (Total Characters / 5) / (Total Seconds / 60)
+function calculateWPM(totalCharacters, totalSeconds) {
+    return Math.round((totalCharacters / 5) / (totalSeconds / 60));
+}
+
 //as you type, if the text matches the origin text, the color changes green, if it doesnt match changes red
 testArea.addEventListener("keyup", function() {
     const enteredText = testArea.value;
+    const originText = document.querySelector("#origin-text p").innerHTML;
     if (enteredText === originText) {
         testWrapper.style.borderColor = "green";
         clearInterval(interval); // Stop the timer when the text matches
@@ -84,28 +127,28 @@ resetButton.addEventListener("click", function() {
     theTimer.innerHTML = "00:00:00"; // Reset timer display
     testArea.value = ""; // Clear the text area
     testWrapper.style.borderColor = "grey"; // Reset border color
-    //stop the timer
-
+    submitButton.style.visibility = "hidden"; // Hide submit button
+    
+    // Load a new random paragraph
+    const randomIndex = Math.floor(Math.random() * Paragraphs.length);
+    document.querySelector("#origin-text p").innerHTML = Paragraphs[randomIndex];
 });
 
 //once submit button is clicked, prompt for name, then add name and time to scoreboard
 submitButton.addEventListener("click", function() {
     const playerName = prompt("Enter your name:");
     const finalTime = theTimer.innerHTML;
+    const totalSeconds = timerToSeconds(finalTime);
+    const wpm = calculateWPM(originText.length, totalSeconds);
     
-    //append to the scoreboard
-    const scores = document.getElementById("scores");
-    const newScore = document.createElement("ul");
-    newScore.classList.add("scorelist");
-    newScore.innerHTML = `<li>Name: <span>${playerName}</span></li><li>Time: <span>${finalTime}</span></li>`;
-    scores.appendChild(newScore);
-
     //save to localstorage
-    const scoreData = { name: playerName, time: finalTime };
+    const scoreData = { name: playerName, time: finalTime, wpm: wpm };
     let storedScores = JSON.parse(localStorage.getItem("typingTestScores")) || [];
     storedScores.push(scoreData);
     localStorage.setItem("typingTestScores", JSON.stringify(storedScores));
 
+    // Display updated top 3 scores
+    displayTopScores();
     
     // Hide the submit button after submission
     submitButton.style.visibility = "hidden";
