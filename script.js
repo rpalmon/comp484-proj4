@@ -104,13 +104,29 @@ function calculateWPM(totalCharacters, totalSeconds) {
 testArea.addEventListener("keyup", function() {
     const enteredText = testArea.value;
     const originText = document.querySelector("#origin-text p").innerHTML;
+    
+    // Build character feedback display
+    let feedbackHTML = "";
+    for (let i = 0; i < originText.length; i++) {
+        if (i < enteredText.length) {
+            if (enteredText[i] === originText[i]) {
+                feedbackHTML += `<span class="char-correct">${originText[i]}</span>`;
+            } else {
+                feedbackHTML += `<span class="char-incorrect">${originText[i]}</span>`;
+            }
+        } else {
+            feedbackHTML += `<span class="char-untyped">${originText[i]}</span>`;
+        }
+    }
+    document.getElementById("character-feedback").innerHTML = feedbackHTML;
+    
     if (enteredText === originText) {
         testWrapper.style.borderColor = "green";
         clearInterval(interval); // Stop the timer when the text matches
         //show the submit score button
         submitButton.style.visibility = "visible";
     } else if (originText.startsWith(enteredText)) {
-        testWrapper.style.borderColor = "orange"; // Partial match
+        testWrapper.style.borderColor = "blue"; // Partial match
     } else {
         testWrapper.style.borderColor = "red"; // No match
     }
@@ -128,6 +144,7 @@ resetButton.addEventListener("click", function() {
     testArea.value = ""; // Clear the text area
     testWrapper.style.borderColor = "grey"; // Reset border color
     submitButton.style.visibility = "hidden"; // Hide submit button
+    document.getElementById("character-feedback").innerHTML = ""; // Clear character feedback
     
     // Load a new random paragraph
     const randomIndex = Math.floor(Math.random() * Paragraphs.length);

@@ -153,6 +153,28 @@ body {
     padding-bottom: 1em;
 }
 
+#character-feedback {
+    font-size: 1.2em;
+    word-wrap: break-word;
+    font-family: monospace;
+    padding: 0.5em 0;
+    line-height: 1.6;
+}
+
+.char-correct {
+    color: green;
+    font-weight: bold;
+}
+
+.char-incorrect {
+    color: red;
+    font-weight: bold;
+}
+
+.char-untyped {
+    color: #999;
+}
+
 .test-wrapper {
     display: flex;
 }
