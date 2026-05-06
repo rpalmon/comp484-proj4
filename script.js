@@ -31,7 +31,8 @@ function displayTopScores() {
         const newScore = document.createElement("ul");
         newScore.classList.add("scorelist");
         const wpmDisplay = score.wpm ? `<li>WPM: <span>${score.wpm}</span></li>` : "";
-        newScore.innerHTML = `<li>Name: <span>${score.name}</span></li><li>Time: <span>${score.time}</span></li>${wpmDisplay}`;
+        const errorsDisplay = score.errors !== undefined ? `<li>Errors: <span>${score.errors}</span></li>` : "";
+        newScore.innerHTML = `<li>Name: <span>${score.name}</span></li><li>Time: <span>${score.time}</span></li>${wpmDisplay}${errorsDisplay}`;
         scoresContainer.appendChild(newScore);
     });
 }
@@ -49,6 +50,7 @@ window.onload = function() {
 var timerCount = 0;
 var interval;
 var timerRunning = false;
+var errorCount = 0;
 
 
 
@@ -105,6 +107,16 @@ testArea.addEventListener("keyup", function() {
     const enteredText = testArea.value;
     const originText = document.querySelector("#origin-text p").innerHTML;
     
+    // Calculate errors
+    let currentErrors = 0;
+    for (let i = 0; i < enteredText.length; i++) {
+        if (enteredText[i] !== originText[i]) {
+            currentErrors++;
+        }
+    }
+    errorCount = currentErrors;
+    document.getElementById("error-counter").textContent = errorCount;
+    
     // Build character feedback display
     let feedbackHTML = "";
     for (let i = 0; i < originText.length; i++) {
@@ -125,14 +137,19 @@ testArea.addEventListener("keyup", function() {
         clearInterval(interval); // Stop the timer when the text matches
         //show the submit score button
         submitButton.style.visibility = "visible";
+    } else if (enteredText.length === originText.length) {
+        // User has typed the full length (even with errors)
+        testWrapper.style.borderColor = "red";
+        clearInterval(interval); // Stop the timer
+        submitButton.style.visibility = "visible";
     } else if (originText.startsWith(enteredText)) {
         testWrapper.style.borderColor = "blue"; // Partial match
     } else {
         testWrapper.style.borderColor = "red"; // No match
     }
 
-    // If the text matches, stop the timer
-    if (enteredText === originText) {
+    // If the text matches or user reached the end, stop the timer
+    if (enteredText === originText || enteredText.length === originText.length) {
         clearInterval(interval);
     }
 });
@@ -140,10 +157,12 @@ testArea.addEventListener("keyup", function() {
 resetButton.addEventListener("click", function() {
     clearInterval(interval); // Stop the timer
     timerCount = 0; // Reset timer count
+    errorCount = 0; // Reset error count
     theTimer.innerHTML = "00:00:00"; // Reset timer display
     testArea.value = ""; // Clear the text area
     testWrapper.style.borderColor = "grey"; // Reset border color
     submitButton.style.visibility = "hidden"; // Hide submit button
+    document.getElementById("error-counter").textContent = "0"; // Reset error display
     document.getElementById("character-feedback").innerHTML = ""; // Clear character feedback
     
     // Load a new random paragraph
@@ -156,10 +175,11 @@ submitButton.addEventListener("click", function() {
     const playerName = prompt("Enter your name:");
     const finalTime = theTimer.innerHTML;
     const totalSeconds = timerToSeconds(finalTime);
-    const wpm = calculateWPM(originText.length, totalSeconds);
+    const currentOriginText = document.querySelector("#origin-text p").innerHTML;
+    const wpm = calculateWPM(currentOriginText.length, totalSeconds);
     
     //save to localstorage
-    const scoreData = { name: playerName, time: finalTime, wpm: wpm };
+    const scoreData = { name: playerName, time: finalTime, wpm: wpm, errors: errorCount };
     let storedScores = JSON.parse(localStorage.getItem("typingTestScores")) || [];
     storedScores.push(scoreData);
     localStorage.setItem("typingTestScores", JSON.stringify(storedScores));
